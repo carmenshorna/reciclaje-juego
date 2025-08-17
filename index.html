@@ -51,31 +51,31 @@
   </div>
 
   <script>
-    // ----- Categorías (tachos) con imágenes -----
+    // ----- Categorías (tachos) con imágenes desde carpeta img/ -----
     const CATEGORIES = [
-      { key:'papel',   name:'Papel y Cartón', img:'papel.png'},
-      { key:'plastico',name:'Plástico',       img:'botella.jpg'},
-      { key:'vidrio',  name:'Vidrio',         img:'vidrio.png'},
-      { key:'metal',   name:'Metal',          img:'metal.png'},
-      { key:'organico',name:'Orgánico',       img:'organico.png'}
+      { key:'papel',   name:'Papel y Cartón', img:'img/tacho_papel.png'},
+      { key:'plastico',name:'Plástico',       img:'img/tacho_plastico.png'},
+      { key:'vidrio',  name:'Vidrio',         img:'img/tacho_vidrio.png'},
+      { key:'metal',   name:'Metal',          img:'img/tacho_metal.png'},
+      { key:'organico',name:'Orgánico',       img:'img/tacho_organico.png'}
     ];
 
     const TYPE_COLORS = {
       papel:'#7fb3ff', plastico:'#ffd166', vidrio:'#80e7c0', metal:'#bdb2ff', organico:'#95d67b'
     };
 
-    // ----- Pool de elementos (con imágenes locales) -----
+    // ----- Pool de elementos (con imágenes locales en /img) -----
     const POOL = [
       {label:'Botella PET',      type:'plastico', src:'img/botella.jpg'},
-      {label:'Revista',          type:'papel',    src:'revista.png'},
-      {label:'Lata de gaseosa',  type:'metal',    src:'lata.png'},
-      {label:'Frasco de vidrio', type:'vidrio',   src:'frasco.png'},
-      {label:'Cáscara de plátano', type:'organico', src:'platano.png'},
-      {label:'Caja de cartón',   type:'papel',    src:'caja.png'},
-      {label:'Tapita plástica',  type:'plastico', src:'tapita.png'},
-      {label:'Botella de vidrio',type:'vidrio',   src:'botella_vidrio.png'},
-      {label:'Restos de comida', type:'organico', src:'comida.png'},
-      {label:'Envase de yogur',  type:'plastico', src:'yogur.png'}
+      {label:'Revista',          type:'papel',    src:'img/revista.png'},
+      {label:'Lata de gaseosa',  type:'metal',    src:'img/lata_gaseosa.png'},
+      {label:'Frasco de vidrio', type:'vidrio',   src:'img/frasco_vidrio.png'},
+      {label:'Cáscara de plátano', type:'organico', src:'img/platano.png'},
+      {label:'Caja de cartón',   type:'papel',    src:'img/caja_carton.png'},
+      {label:'Tapita plástica',  type:'plastico', src:'img/tapas.png'},
+      {label:'Botella de vidrio',type:'vidrio',   src:'img/vidrio.png'},
+      {label:'Restos de comida', type:'organico', src:'img/comida.png'},
+      {label:'Envase de yogur',  type:'plastico', src:'img/yogur.png'}
     ];
 
     const itemsEl = document.getElementById('items');
