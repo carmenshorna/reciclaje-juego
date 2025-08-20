@@ -20,7 +20,7 @@
     .item{
       user-select:none;padding:.45rem .6rem;border-radius:12px;border:1px solid #2a6b43;
       background:linear-gradient(180deg,#1c4a2d,#14371f);color:#e9f1ff;font-weight:700;letter-spacing:.2px;
-      display:inline-flex;align-items:center;gap:.45rem; touch-action:none;
+      display:inline-flex;align-items:center;gap:.45rem; touch-action:none; /* clave para móvil */
     }
     .item[draggable="true"]{cursor:grab}
     .item:active{cursor:grabbing}
@@ -31,9 +31,9 @@
     .bin{border:2px solid #2a6b43;border-radius:14px;padding:10px;min-height:120px;background:linear-gradient(180deg,#1c4a2d,#14371f);display:flex;flex-direction:column}
     .bin header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
     .bin .drop{flex:1;min-height:90px}
-    .bin .name{font-weight:800; color:#ffffff;}
+    .bin .name{font-weight:800; color:#ffffff;} /* nombres en blanco */
     .bin .emoji img{width:24px;height:24px;object-fit:contain}
-    .bin.accept{outline:3px dashed #7fa7ff;outline-offset:2px}
+    .bin.accept{outline:3px dashed #7fa3ff;outline-offset:2px}
     .bin.correct{box-shadow:0 0 0 2px #50fa7b inset}
     .bin.wrong{box-shadow:0 0 0 2px #ff6978 inset}
 
@@ -62,15 +62,11 @@
       .item .icon { width:20px; height:20px; }
     }
 
-    /* Fantasma para touch */
+    /* “fantasma” que sigue el dedo en móviles */
     .ghost{
       position:fixed; left:0; top:0; transform:translate(-9999px,-9999px);
       pointer-events:none; z-index:9998; opacity:.95;
     }
-
-    /* Botón sonido */
-    .sound-toggle{margin-left:auto}
-    .muted{opacity:.65}
   </style>
 </head>
 <body>
@@ -80,7 +76,6 @@
       <div class="badge">Puntaje: <span id="score" class="accent">0</span></div>
       <div class="badge">Intentos: <span id="attempts">0</span></div>
       <div class="badge">Restantes: <span id="remaining">0</span></div>
-      <button class="btn sound-toggle" id="btn-sound" aria-pressed="true">🔊 Sonido: ON</button>
       <button class="btn" id="btn-new">Nuevo juego</button>
     </div>
 
@@ -100,28 +95,26 @@
     </div>
   </div>
 
-  <!-- Fantasma para touch -->
+  <!-- Elemento “fantasma” para touch -->
   <div id="ghost" class="ghost"></div>
 
   <script>
-    /* ===== Sonidos (MP3 externos) con desbloqueo en primer toque ===== */
-    const successAudio = new Audio("sounds/success.mp3");
-    const errorAudio   = new Audio("sounds/error.mp3");
-    let soundEnabled = true;
-    let audioUnlocked = false;
 
-    function unlockAudio(){
-      if(audioUnlocked) return;
-      // Intentos de reproducción silenciosa para desbloquear en iOS/Android
-      try { successAudio.volume = 0.001; successAudio.play().then(()=>{ successAudio.pause(); successAudio.currentTime=0; audioUnlocked = true; }); } catch(e){}
-      try { errorAudio.volume = 0.001; errorAudio.play().then(()=>{ errorAudio.pause(); errorAudio.currentTime=0; audioUnlocked = true; }); } catch(e){}
-    }
-    // Desbloquear al primer gesto del usuario
-    window.addEventListener('pointerdown', unlockAudio, {once:true});
-    window.addEventListener('keydown', unlockAudio, {once:true});
-
-    function playSuccess(){ if(!soundEnabled) return; successAudio.currentTime=0; successAudio.volume=1; successAudio.play().catch(()=>{}); }
-    function playError(){ if(!soundEnabled) return; errorAudio.currentTime=0; errorAudio.volume=1; errorAudio.play().catch(()=>{}); }
+	 // Reemplazo de sonidos con Web Audio (beeps)
+  let ctx;
+  function beep(freq=880, dur=0.08){
+    try{
+      ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = freq; o.type = 'sine';
+      g.gain.setValueAtTime(0.001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + dur);
+    }catch(e){}
+  }
+  function playSuccess(){ if(!soundEnabled) return; beep(1046, 0.12); } // DO alto
+  function playError(){ if(!soundEnabled) return; beep(220, 0.12); }    // LA grave
 
     /* ===== Datos del juego ===== */
     const CATEGORIES = [
@@ -152,16 +145,9 @@
     const attemptsEl = document.getElementById('attempts');
     const remainingEl = document.getElementById('remaining');
     const btnNew = document.getElementById('btn-new');
-    const btnSound = document.getElementById('btn-sound');
     const ghost = document.getElementById('ghost');
 
     let score=0, attempts=0, remaining=0;
-
-    btnSound.addEventListener('click', ()=>{
-      soundEnabled = !soundEnabled;
-      btnSound.textContent = soundEnabled ? '🔊 Sonido: ON' : '🔇 Sonido: OFF';
-      btnSound.classList.toggle('muted', !soundEnabled);
-    });
 
     /* ===== Util ===== */
     function shuffle(arr){ return arr.sort(()=>Math.random()-.5); }
@@ -193,18 +179,18 @@
         el.className='item'; el.draggable=true; el.dataset.type=it.type;
         const img=it.src || svgIcon(it.label, TYPE_COLORS[it.type]||'#6aa9ff');
         el.innerHTML=`<img class="icon" src="${img}" alt="${it.label}"> <span>${it.label}</span>`;
-        enableDrag(el); enableTouchDrag(el);
+        enableDrag(el); enableTouchDrag(el); // 👈 activamos mouse y touch
         itemsEl.appendChild(el);
       });
     }
 
-    /* ===== Drag con mouse ===== */
+    /* ===== Drag con mouse (desktop) ===== */
     function enableDrag(el){
       el.addEventListener('dragstart', ()=> el.classList.add('dragging'));
       el.addEventListener('dragend',   ()=> el.classList.remove('dragging'));
     }
 
-    /* ===== Drop común ===== */
+    /* ===== Drop (común) ===== */
     function enableDrop(bin){
       ['dragenter','dragover'].forEach(t=>{
         bin.addEventListener(t,e=>{e.preventDefault();bin.classList.add('accept');});
@@ -224,14 +210,11 @@
       attempts++;
       if(ok){
         score+=10; remaining--; bin.classList.add('correct'); itemEl.remove();
-        playSuccess();
         setTimeout(()=>bin.classList.remove('correct'),500);
       }else{
         score=Math.max(0,score-3); bin.classList.add('wrong');
-        playError();
         showModal("⚠️ Ese residuo no corresponde a este tacho. Intenta de nuevo.");
         setTimeout(()=>bin.classList.remove('wrong'),500);
-        if(navigator.vibrate) navigator.vibrate(100); // vibración breve en móvil
       }
       updateHUD();
       if(remaining===0){ showModal(`🎉 ¡Buen trabajo! Puntaje final: ${score}`); }
@@ -245,9 +228,9 @@
 
     function onTouchStart(e){
       e.preventDefault();
-      unlockAudio(); // asegúrate de que el audio quede habilitado tras primer toque
       touchItem = e.currentTarget;
       touchItem.classList.add('dragging');
+      // clonar “fantasma”
       ghost.innerHTML = touchItem.innerHTML;
       ghost.style.transform = `translate(${e.touches[0].clientX}px, ${e.touches[0].clientY}px)`;
       ghost.style.display = 'inline-flex';
@@ -260,6 +243,7 @@
       e.preventDefault();
       const x = e.touches[0].clientX, y = e.touches[0].clientY;
       ghost.style.transform = `translate(${x}px, ${y}px)`;
+      // resaltar bin bajo el dedo
       const el = document.elementFromPoint(x, y);
       document.querySelectorAll('.bin').forEach(b=>b.classList.remove('accept'));
       const bin = el && el.closest ? el.closest('.bin') : null;
@@ -268,16 +252,18 @@
 
     function onTouchEnd(e){
       const x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+      // detectar bin objetivo
       const el = document.elementFromPoint(x, y);
       const bin = el && el.closest ? el.closest('.bin') : null;
 
+      // limpiar estados
       ghost.style.transform = 'translate(-9999px,-9999px)';
       ghost.classList.remove('item');
       document.querySelectorAll('.bin').forEach(b=>b.classList.remove('accept'));
 
       if(touchItem){
         touchItem.classList.remove('dragging');
-        if(bin){ processDrop(touchItem, bin); }
+        if(bin){ processDrop(touchItem, bin); } // evalúa acierto/error
       }
       touchItem = null;
       document.removeEventListener('touchmove', onTouchMove);
