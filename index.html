@@ -67,8 +67,13 @@
       position:fixed; left:0; top:0; transform:translate(-9999px,-9999px);
       pointer-events:none; z-index:9998; opacity:.95;
     }
+
+    /* Botón sonido */
+    .sound-toggle{margin-left:auto}
+    .muted{opacity:.65}
   </style>
 </head>
+
 <body>
   <div class="game-wrap">
     <h2>Juego: arrastra la basura al tacho correcto ♻️</h2>
@@ -100,21 +105,24 @@
 
   <script>
 
-	 // Reemplazo de sonidos con Web Audio (beeps)
-  let ctx;
-  function beep(freq=880, dur=0.08){
-    try{
-      ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.value = freq; o.type = 'sine';
-      g.gain.setValueAtTime(0.001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-      o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + dur);
-    }catch(e){}
-  }
-  function playSuccess(){ if(!soundEnabled) return; beep(1046, 0.12); } // DO alto
-  function playError(){ if(!soundEnabled) return; beep(220, 0.12); }    // LA grave
+/* ===== Sonidos (MP3 externos) con desbloqueo en primer toque ===== */
+    const successAudio = new Audio("sounds/success.mp3");
+    const errorAudio   = new Audio("sounds/error.mp3");
+    let soundEnabled = true;
+    let audioUnlocked = false;
+
+    function unlockAudio(){
+      if(audioUnlocked) return;
+      // Intentos de reproducción silenciosa para desbloquear en iOS/Android
+      try { successAudio.volume = 0.001; successAudio.play().then(()=>{ successAudio.pause(); successAudio.currentTime=0; audioUnlocked = true; }); } catch(e){}
+      try { errorAudio.volume = 0.001; errorAudio.play().then(()=>{ errorAudio.pause(); errorAudio.currentTime=0; audioUnlocked = true; }); } catch(e){}
+    }
+    // Desbloquear al primer gesto del usuario
+    window.addEventListener('pointerdown', unlockAudio, {once:true});
+    window.addEventListener('keydown', unlockAudio, {once:true});
+
+    function playSuccess(){ if(!soundEnabled) return; successAudio.currentTime=0; successAudio.volume=1; successAudio.play().catch(()=>{}); }
+    function playError(){ if(!soundEnabled) return; errorAudio.currentTime=0; errorAudio.volume=1; errorAudio.play().catch(()=>{}); }
 
     /* ===== Datos del juego ===== */
     const CATEGORIES = [
