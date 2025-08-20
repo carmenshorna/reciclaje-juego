@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Juego de Reciclaje</title>
   <style>
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#ebf9e6;color:#e8eeff}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#ebf9e6;color:#0b3d1b}
     .game-wrap{padding:16px;max-width:900px;margin:auto}
-    h2 { color: #0b3d1b; } /* Título en verde oscuro */
+    h2 { color: #0b3d1b; }
     .hud{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-    .badge{background:#174d2d;border:1px solid #2a6b43;padding:.35rem .6rem;border-radius:10px}
+    .badge{background:#174d2d;border:1px solid #2a6b43;color:#d7e3ff;padding:.35rem .6rem;border-radius:10px}
     .accent{color:#50fa7b}
     .btn{appearance:none;border:1px solid #2a6b43;background:#174d2d;color:#d7e3ff;border-radius:10px;padding:.5rem .8rem;font-weight:600;cursor:pointer}
     .btn:hover{filter:brightness(1.1)}
@@ -23,22 +23,21 @@
     @media (max-width: 720px){.bins{grid-template-columns:repeat(2,1fr)}}
     .bin{border:2px solid #2a6b43;border-radius:14px;padding:10px;min-height:120px;background:linear-gradient(180deg,#1c4a2d,#14371f);display:flex;flex-direction:column}
     .bin header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-    .bin .drop{flex:1;min-height:90px} 
-    .bin .name{font-weight:800}
+    .bin .drop{flex:1;min-height:90px}
+    .bin .name{font-weight:800;color:#0b3d1b}
     .bin .emoji img{width:24px;height:24px;object-fit:contain}
     .bin.accept{outline:3px dashed #7fa3ff;outline-offset:2px}
     .bin.correct{box-shadow:0 0 0 2px #50fa7b inset}
     .bin.wrong{box-shadow:0 0 0 2px #ff6978 inset}
     .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .legend span{border:1px solid #2a6b43;border-radius:999px;padding:.2rem .5rem;font-size:.75rem;background:rgba(93,255,134,.08);color:#0b3d1b;   /* Texto de la leyenda en verde oscuro */
-    font-weight:600;}
- /* --- Ajustes responsivos --- */
-  @media (max-width: 600px){
-    h2 { font-size: 1.2rem; }
-    .bin .name { font-size: 0.85rem; }
-    .item { font-size: 0.8rem; padding: .3rem .5rem; }
-    .item .icon { width:20px; height:20px; }
-  }
+    .legend span{border:1px solid #2a6b43;border-radius:999px;padding:.2rem .5rem;font-size:.75rem;background:rgba(93,255,134,.08);color:#0b3d1b;font-weight:600}
+    /* Responsive */
+    @media (max-width: 600px){
+      h2 { font-size: 1.2rem; }
+      .bin .name { font-size: 0.85rem; }
+      .item { font-size: 0.8rem; padding: .3rem .5rem; }
+      .item .icon { width:20px; height:20px; }
+    }
   </style>
 </head>
 <body>
@@ -61,54 +60,31 @@
   </div>
 
   <script>
-    
-// --- sonidos ---
-const sndSuccess = new Audio("sounds/success.mp3");
-const sndError   = new Audio("sounds/error.mp3");
+    // --- sonidos (opcional; coloca tus archivos en /sounds) ---
+    const sndSuccess = new Audio("sounds/success.mp3");
+    const sndError   = new Audio("sounds/error.mp3");
 
-// --- cronómetro ---
-let time = 60;
-let timerInterval;
+    // --- cronómetro ---
+    let time = 60;
+    let timerInterval;
 
-function startTimer(){
-  clearInterval(timerInterval);
-  time = 60;
-  document.getElementById("time").textContent = time;
-  timerInterval = setInterval(()=>{
-    time--;
-    document.getElementById("time").textContent = time;
-    if(time <= 0){
+    function startTimer(){
       clearInterval(timerInterval);
-      alert(`⏰ Tiempo agotado. Puntaje final: ${score}`);
-      newGame();
+      time = 60;
+      document.getElementById("time").textContent = time;
+      timerInterval = setInterval(()=>{
+        time--;
+        document.getElementById("time").textContent = time;
+        if(time <= 0){
+          clearInterval(timerInterval);
+          alert(`⏰ Tiempo agotado. Puntaje final: ${score}`);
+          newGame();
+        }
+      },1000);
     }
-  },1000);
-}
 
-function celebrate(){
-  clearInterval(timerInterval); // detener cronómetro
-  alert(`¡Buen trabajo! Clasificaste todos los residuos en ${60-time}s. Puntaje final: ${score}`);
-}
-
-// en drop correcto o incorrecto
-if(itemType===accept){
-  score += 10; remaining--; bin.classList.add('correct'); dragging.remove();
-  sndSuccess.play(); // sonido éxito
-  setTimeout(()=>bin.classList.remove('correct'),500);
-}else{
-  score = Math.max(0, score-3); bin.classList.add('wrong');
-  sndError.play(); // sonido error
-  alert("⚠️ Ese residuo no corresponde a este tacho. Intenta de nuevo.");
-  setTimeout(()=>bin.classList.remove('wrong'),500);
-}
-
-// en init() o newGame()
-function newGame(){
-  score=0; attempts=0; remaining=0; updateHUD();
-  createItems();
-  startTimer(); // iniciar cronómetro
-}
-const CATEGORIES = [
+    // --- datos del juego ---
+    const CATEGORIES = [
       { key:'papel',   name:'Papel y Cartón', img:'img/tacho_papel.png'},
       { key:'plastico',name:'Plástico',       img:'img/tacho_plastico.png'},
       { key:'vidrio',  name:'Vidrio',         img:'img/tacho_vidrio.png'},
@@ -116,9 +92,7 @@ const CATEGORIES = [
       { key:'organico',name:'Orgánico',       img:'img/tacho_organico.png'}
     ];
 
-    const TYPE_COLORS = {
-      papel:'#7fb3ff', plastico:'#ffd166', vidrio:'#80e7c0', metal:'#bdb2ff', organico:'#95d67b'
-    };
+    const TYPE_COLORS = {papel:'#7fb3ff', plastico:'#ffd166', vidrio:'#80e7c0', metal:'#bdb2ff', organico:'#95d67b'};
 
     const POOL = [
       {label:'Botella PET',      type:'plastico', src:'img/botella.jpg'},
@@ -133,6 +107,7 @@ const CATEGORIES = [
       {label:'Envase de yogur',  type:'plastico', src:'img/yogur.png'}
     ];
 
+    // --- referencias UI ---
     const itemsEl = document.getElementById('items');
     const binsEl = document.getElementById('bins');
     const scoreEl = document.getElementById('score');
@@ -193,9 +168,11 @@ const CATEGORIES = [
         attempts++;
         if(itemType===accept){
           score += 10; remaining--; bin.classList.add('correct'); dragging.remove();
+          try{ sndSuccess.play(); }catch(e){}
           setTimeout(()=>bin.classList.remove('correct'),500);
         }else{
           score = Math.max(0, score-3); bin.classList.add('wrong');
+          try{ sndError.play(); }catch(e){}
           alert("⚠️ Ese residuo no corresponde a este tacho. Intenta de nuevo.");
           setTimeout(()=>bin.classList.remove('wrong'),500);
         }
@@ -211,21 +188,16 @@ const CATEGORIES = [
     }
 
     function celebrate(){
-      alert(`¡Buen trabajo! Clasificaste todos los residuos. Puntaje final: ${score}`);
-    }
-
-    function showToast(msg){
-      const t = document.getElementById('toast');
-      if(!t) return;
-      t.textContent = msg;
-      t.classList.add('show');
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(()=> t.classList.remove('show'), 1800);
+      clearInterval(timerInterval);
+      alert(`¡Buen trabajo! Clasificaste todos los residuos en ${60-time}s. Puntaje final: ${score}`);
+      newGame();
     }
 
     function newGame(){
-      score=0; attempts=0; remaining=0; updateHUD();
+      score=0; attempts=0; remaining=0;
+      updateHUD();
       createItems();
+      startTimer(); // ¡no quitar!
     }
 
     function init(){
@@ -245,6 +217,5 @@ const CATEGORIES = [
 
     init();
   </script>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
