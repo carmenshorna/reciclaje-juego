@@ -32,6 +32,13 @@
     .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .legend span{border:1px solid #2a6b43;border-radius:999px;padding:.2rem .5rem;font-size:.75rem;background:rgba(93,255,134,.08);color:#0b3d1b;   /* Texto de la leyenda en verde oscuro */
     font-weight:600;}
+ /* --- Ajustes responsivos --- */
+  @media (max-width: 600px){
+    h2 { font-size: 1.2rem; }
+    .bin .name { font-size: 0.85rem; }
+    .item { font-size: 0.8rem; padding: .3rem .5rem; }
+    .item .icon { width:20px; height:20px; }
+  }
   </style>
 </head>
 <body>
@@ -41,6 +48,7 @@
       <div class="badge">Puntaje: <span id="score" class="accent">0</span></div>
       <div class="badge">Intentos: <span id="attempts">0</span></div>
       <div class="badge">Restantes: <span id="remaining">0</span></div>
+      <div class="badge">Tiempo: <span id="time">60</span>s</div>
       <button class="btn" id="btn-new">Nuevo juego</button>
     </div>
 
@@ -53,7 +61,54 @@
   </div>
 
   <script>
-    const CATEGORIES = [
+    
+// --- sonidos ---
+const sndSuccess = new Audio("sounds/success.mp3");
+const sndError   = new Audio("sounds/error.mp3");
+
+// --- cronómetro ---
+let time = 60;
+let timerInterval;
+
+function startTimer(){
+  clearInterval(timerInterval);
+  time = 60;
+  document.getElementById("time").textContent = time;
+  timerInterval = setInterval(()=>{
+    time--;
+    document.getElementById("time").textContent = time;
+    if(time <= 0){
+      clearInterval(timerInterval);
+      alert(`⏰ Tiempo agotado. Puntaje final: ${score}`);
+      newGame();
+    }
+  },1000);
+}
+
+function celebrate(){
+  clearInterval(timerInterval); // detener cronómetro
+  alert(`¡Buen trabajo! Clasificaste todos los residuos en ${60-time}s. Puntaje final: ${score}`);
+}
+
+// en drop correcto o incorrecto
+if(itemType===accept){
+  score += 10; remaining--; bin.classList.add('correct'); dragging.remove();
+  sndSuccess.play(); // sonido éxito
+  setTimeout(()=>bin.classList.remove('correct'),500);
+}else{
+  score = Math.max(0, score-3); bin.classList.add('wrong');
+  sndError.play(); // sonido error
+  alert("⚠️ Ese residuo no corresponde a este tacho. Intenta de nuevo.");
+  setTimeout(()=>bin.classList.remove('wrong'),500);
+}
+
+// en init() o newGame()
+function newGame(){
+  score=0; attempts=0; remaining=0; updateHUD();
+  createItems();
+  startTimer(); // iniciar cronómetro
+}
+const CATEGORIES = [
       { key:'papel',   name:'Papel y Cartón', img:'img/tacho_papel.png'},
       { key:'plastico',name:'Plástico',       img:'img/tacho_plastico.png'},
       { key:'vidrio',  name:'Vidrio',         img:'img/tacho_vidrio.png'},
